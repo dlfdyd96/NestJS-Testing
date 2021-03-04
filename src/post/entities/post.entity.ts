@@ -8,8 +8,8 @@ import {
   VersionColumn,
 } from 'typeorm';
 
-@Entity({ name: 'post' })
-export class Post {
+@Entity({ name: 'posts' })
+export class Posts {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
