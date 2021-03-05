@@ -41,6 +41,9 @@ export class PostService {
       const post = await this.postRepository.findOne({
         id,
       });
+      if (!post) {
+        throw new EntityNotFoundError(Posts, id);
+      }
       PostService.logger.debug(post);
       return post;
     } catch (error) {

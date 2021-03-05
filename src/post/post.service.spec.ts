@@ -61,12 +61,25 @@ describe('PostService', () => {
   });
 
   describe('findAll()', () => {
-    it.todo('should be find All');
-    it.todo('should fail on exception');
+    it('should be find All', async () => {
+      postRepository.find.mockResolvedValue([]);
+
+      const result = await service.findAll();
+
+      expect(postRepository.find).toHaveBeenCalledTimes(1);
+
+      expect(result).toEqual([]);
+    });
+    it('should fail on exception', async () => {
+      postRepository.find.mockRejectedValue('find error');
+      const result = await service.findAll();
+      expect(result).toEqual('find error');
+    });
   });
 
   describe('findOne()', () => {
-    it.todo('should be findOne');
+    it('should be findOne', async () => {});
+    it.todo('should fail if no post is found');
     it.todo('should fail on update exception');
   });
 
