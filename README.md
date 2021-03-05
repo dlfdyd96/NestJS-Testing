@@ -241,6 +241,8 @@ export class PostService {
 }
 ```
 
+<hr>
+
 ## Unit Testing
 
 ### install
@@ -318,6 +320,7 @@ Mock에 대해서 모르신다면 밑에 참고 게시글을 꼭 참고하세요
 ```ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Posts } from './entities/post.entity';
 import { PostService } from './post.service';
 
@@ -328,8 +331,11 @@ const mockPostRepository = () => ({
   softDelete: jest.fn(),
 });
 
+type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
+
 describe('PostService', () => {
   let service: PostService;
+  let postRepository: MockRepository<Posts>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -343,6 +349,9 @@ describe('PostService', () => {
     }).compile();
 
     service = module.get<PostService>(PostService);
+    postRepository = module.get<MockRepository<Posts>>(
+      getRepositoryToken(Posts),
+    );
   });
 
   it('should be defined', () => {
@@ -351,12 +360,28 @@ describe('PostService', () => {
 });
 ```
 
+> **`MockRepository` 🔍**
+>
+> ```ts
+> type MockRepository<T = any> = Partial<
+>   Record<keyof Repository<T>, jest.Mock>
+> >;
+> ```
+>
+> Repository를 Mocking 하기위해 Repository Type을 정의한 것
+>
+> 1. `Partial` : 타입 T의 모든 요소를 optional하게 한다.
+> 2. `Record` : 타입 T의 모든 K의 집합으로 타입을 만들어준다.
+> 3. `keyof Repository<T>` : Repository의 모든 method key를 불러온다.
+> 4. `jest.Mock` : 3번의 key들을 다 가짜로 만들어준다.
+> 5. `type MockRepository<T = any>` : 이를 type으로 정의해준다.
+
 - Result
 
 ```sh
- PASS  src/post/post.service.spec.ts
-  PostService
-    ✓ should be defined (12 ms)
+PASS  src/post/post.service.spec.ts
+PostService
+  ✓ should be defined (12 ms)
 
 Test Suites: 1 passed, 1 total
 Tests:       1 passed, 1 total
@@ -367,3 +392,113 @@ Ran all test suites related to changed files.
 Watch Usage: Press w to show more.
 
 ```
+
+### Unit Test
+
+Unit Test는 코드의 **각 줄**에 문제가 있나 없나를 검사합니다. (이 함수가 제대로 동작하냐 안하냐는 e2e에 가깝습니다.)
+
+Unit Test는 우리가 의도한대로
+
+1. 잘 작동되는지 테스트를 확인하고,
+2. 원하는 출력물이 나오며,
+3. 고립된 결과를
+
+원합니다.
+
+#### Test `create()` method
+
+- post.service.spec.ts
+
+```ts
+// ...
+
+describe('PostService', () => {
+  // ...
+  describe('create()', () => {
+    it.todo('should fail on exception');
+    it.todo('should create Posts');
+  });
+});
+```
+
+여기서 `describe('create()', () => {...})` 는 테스트할 `create()` method의 큰 범주라고 생각하시면 됩니다.
+
+`it.todo(...)`는 모든 경우의 수에 대해 test를 하는 것이고 `todo()` 는 test를 나중에 만들거라고 jest에게 알려줍니다.
+
+- result
+
+```
+PASS  src/post/post.service.spec.ts (5.055 s)
+  PostService
+    ✓ should be defined (14 ms)
+    create()
+      ✎ todo should fail on exception
+      ✎ todo should create Posts
+
+Test Suites: 1 passed, 1 total
+Tests:       2 todo, 1 passed, 3 total
+Snapshots:   0 total
+Time:        5.315 s
+Ran all test suites related to changed files.
+
+Watch Usage: Press w to show more.
+```
+
+- post.service.spec.ts
+
+```ts
+describe('PostService', () => {
+  describe('create()', () => {
+    const createArgs = {
+      title: '제목',
+      contents: '글',
+    };
+    it('should fail on exception', async () => {
+      // postRepository.save() error 발생
+      postRepository.save.mockRejectedValue('save error'); // 실패할꺼라고 가정한다.
+      const result = await service.create(createArgs);
+      expect(result).toEqual('save error'); // 진짜 에러 발생했넴
+    });
+
+    it('should create Posts', async () => {
+      postRepository.save.mockResolvedValue(createArgs); // 성공할꺼라고 가정한다.
+      const result = await service.create(createArgs); //
+
+      expect(postRepository.save).toHaveBeenCalledTimes(1); // save가 1번 불러졌니?
+      expect(postRepository.save).toHaveBeenCalledWith(createArgs); // 매개변수로 createArgs가 주어졌니?
+
+      expect(result).toEqual(createArgs); // 이 create() method의 결과가 `createArgs`와 똑같니?
+    });
+  });
+});
+```
+
+- result
+
+```
+PASS  src/post/post.service.spec.ts
+  PostService
+    ✓ should be defined (11 ms)
+    create()
+      ✓ should fail on exception (19 ms)
+      ✓ should create Posts (9 ms)
+
+[Nest] 38755   - 2021. 03. 05. 오후 6:16:19   [PostService] Object:
+{
+  "title": "제목",
+  "contents": "글"
+}
+
+Test Suites: 1 passed, 1 total
+Tests:       3 passed, 3 total
+Snapshots:   0 total
+Time:        4.761 s
+```
+
+#### Test `findAll()` method
+
+#### Test `findOne()` method
+
+#### Test `update()` method
+
+#### Test `remove()` method

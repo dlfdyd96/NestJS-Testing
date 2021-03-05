@@ -20,8 +20,8 @@ export class PostService {
       PostService.logger.debug(result);
       return result;
     } catch (error) {
-      PostService.logger.debug(error);
-      throw error;
+      PostService.logger.error(error);
+      return error;
     }
   }
 
@@ -31,8 +31,8 @@ export class PostService {
       PostService.logger.debug(posts);
       return posts;
     } catch (error) {
-      PostService.logger.debug(error);
-      throw error;
+      PostService.logger.error(error);
+      return error;
     }
   }
 
@@ -45,7 +45,7 @@ export class PostService {
       return post;
     } catch (error) {
       PostService.logger.debug(error);
-      throw error;
+      return error;
     }
   }
 
@@ -65,7 +65,7 @@ export class PostService {
       return result;
     } catch (error) {
       PostService.logger.debug(error);
-      throw error;
+      return error;
     }
   }
 
@@ -84,7 +84,7 @@ export class PostService {
       return result;
     } catch (error) {
       PostService.logger.debug(error);
-      throw error;
+      return error;
     }
   }
 }

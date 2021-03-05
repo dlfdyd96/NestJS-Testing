@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Posts } from './entities/post.entity';
 import { PostService } from './post.service';
 
@@ -10,8 +11,11 @@ const mockPostRepository = () => ({
   softDelete: jest.fn(),
 });
 
+type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
+
 describe('PostService', () => {
   let service: PostService;
+  let postRepository: MockRepository<Posts>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -25,9 +29,56 @@ describe('PostService', () => {
     }).compile();
 
     service = module.get<PostService>(PostService);
+    postRepository = module.get<MockRepository<Posts>>(
+      getRepositoryToken(Posts),
+    );
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('create()', () => {
+    const createArgs = {
+      title: '제목',
+      contents: '글',
+    };
+    it('should fail on exception', async () => {
+      postRepository.save.mockRejectedValue('save error');
+      const result = await service.create(createArgs);
+      expect(result).toEqual('save error');
+    });
+
+    it('should create Posts', async () => {
+      postRepository.save.mockResolvedValue(createArgs);
+      const result = await service.create(createArgs);
+
+      expect(postRepository.save).toHaveBeenCalledTimes(1);
+      expect(postRepository.save).toHaveBeenCalledWith(createArgs);
+
+      expect(result).toEqual(createArgs);
+    });
+  });
+
+  describe('findAll()', () => {
+    it.todo('should be find All');
+    it.todo('should fail on exception');
+  });
+
+  describe('findOne()', () => {
+    it.todo('should be findOne');
+    it.todo('should fail on update exception');
+  });
+
+  describe('update()', () => {
+    it.todo('should be update post');
+    it.todo('should fail if no post is found');
+    it.todo('should fail on exception');
+  });
+
+  describe('remove()', () => {
+    it.todo('should be remove post');
+    it.todo('should fail if no post is found');
+    it.todo('should fail on softDelete exception');
   });
 });
