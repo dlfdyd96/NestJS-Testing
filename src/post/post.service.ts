@@ -47,7 +47,7 @@ export class PostService {
       PostService.logger.debug(post);
       return post;
     } catch (error) {
-      PostService.logger.debug(error);
+      PostService.logger.error(error);
       return error;
     }
   }
@@ -67,7 +67,7 @@ export class PostService {
       });
       return result;
     } catch (error) {
-      PostService.logger.debug(error);
+      PostService.logger.error(error);
       return error;
     }
   }
@@ -81,12 +81,11 @@ export class PostService {
         throw new EntityNotFoundError(Posts, id);
       }
       PostService.logger.debug(post);
-      const result = await this.postRepository.softDelete({
+      await this.postRepository.softDelete({
         id,
       });
-      return result;
     } catch (error) {
-      PostService.logger.debug(error);
+      PostService.logger.error(error);
       return error;
     }
   }
