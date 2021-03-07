@@ -1,4 +1,20 @@
 # NestJS Testing
+## Index
+- Testing
+- Set up
+  - Create New Project
+  - Generate User Resource
+  - installation
+  - Setting up Project
+- Unit Testing
+  - install
+  - Setting Up Tests
+  - Unit Test
+- Result
+  - Test Coverage
+  - 느낀점
+
+## Testing
 
 ## Set up
 
@@ -23,7 +39,8 @@ npm i @nestjs/config @nestjs/mapped-types @nestjs/typeorm typeorm mysql2 joi
 npm i class-validator class-transformer
 ```
 
-### Main.ts
+### Setting Up Project
+#### Main.ts
 
 ```ts
 async function bootstrap() {
@@ -42,7 +59,7 @@ async function bootstrap() {
 bootstrap();
 ```
 
-### App Module
+#### App Module
 
 ```ts
 @Module({
@@ -80,7 +97,7 @@ bootstrap();
 export class AppModule {}
 ```
 
-### Post Entity
+#### Post Entity
 
 ```ts
 @Entity({ name: 'post' })
@@ -108,7 +125,7 @@ export class Post {
 }
 ```
 
-### Post Module
+#### Post Module
 
 ```ts
 @Module({
@@ -119,7 +136,7 @@ export class Post {
 export class PostModule {}
 ```
 
-### Post Controller
+#### Post Controller
 
 ```ts
 @Controller('post')
@@ -153,7 +170,7 @@ export class PostController {
 }
 ```
 
-### Post Service
+#### Post Service
 
 ```ts
 @Injectable()
@@ -285,7 +302,7 @@ Testing Tool(Jest)이 src 경로를 찾지 못하는 경우입니다. 우리는 
 }
 ```
 
-##### Error또 발생!
+#### Error또 발생!
 
 ```sh
 $ npm run test
@@ -496,9 +513,164 @@ Time:        4.761 s
 ```
 
 #### Test `findAll()` method
+```ts
+describe('findAll()', () => {
+  it('should be find All', async () => {
+    postRepository.find.mockResolvedValue([]);
+
+    const result = await service.findAll();
+
+    expect(postRepository.find).toHaveBeenCalledTimes(1);
+
+    expect(result).toEqual([]);
+  });
+  it('should fail on exception', async () => {
+    postRepository.find.mockRejectedValue('find error');
+    const result = await service.findAll();
+    expect(result).toEqual('find error');
+  });
+});
+
+```
 
 #### Test `findOne()` method
+```ts
+describe('findOne()', () => {
+  const findOneArgs = { id: '1' };
+
+  it('should be findOne', async () => {
+    const mockedPost = {
+      id: '1',
+      title: '음',
+      description: '힘드노',
+    };
+    postRepository.findOne.mockResolvedValue(mockedPost);
+
+    const result = await service.findOne(findOneArgs.id);
+
+    expect(postRepository.findOne).toHaveBeenCalledTimes(1);
+    expect(postRepository.findOne).toHaveBeenCalledWith(findOneArgs);
+
+    expect(result).toEqual(mockedPost);
+  });
+  it('should fail if no post is found', async () => {
+    postRepository.findOne.mockResolvedValue(null);
+
+    const result = await service.findOne(findOneArgs.id);
+
+    expect(postRepository.findOne).toHaveBeenCalledTimes(1);
+    expect(postRepository.findOne).toHaveBeenCalledWith(findOneArgs);
+
+    expect(result).toEqual(new EntityNotFoundError(Posts, findOneArgs.id));
+  });
+  it('should fail on findOne exception', async () => {
+    postRepository.findOne.mockRejectedValue('find error');
+    const result = await service.findOne(findOneArgs.id);
+    expect(result).toEqual('find error');
+  });
+});
+```
 
 #### Test `update()` method
+```ts
+describe('update()', () => {
+  const findOneArgs = { id: '1' };
+  const updateArgs = {
+    title: 'new',
+  };
+
+  it('should be update post', async () => {
+    const oldPosts = {
+      id: '1',
+      title: 'old',
+      description: 'description',
+    };
+    const newPosts = {
+      id: '1',
+      title: 'new',
+      description: 'description',
+    };
+
+    postRepository.findOne.mockResolvedValue(oldPosts);
+    postRepository.save.mockResolvedValue(newPosts);
+
+    const result = await service.update(findOneArgs.id, updateArgs);
+
+    expect(postRepository.findOne).toHaveBeenCalledTimes(1);
+    expect(postRepository.findOne).toHaveBeenCalledWith(findOneArgs);
+
+    expect(postRepository.save).toHaveBeenCalledTimes(1);
+    expect(postRepository.save).toHaveBeenCalledWith({
+      ...oldPosts,
+      ...updateArgs,
+    });
+
+    expect(result).toEqual(newPosts);
+  });
+  it('should fail if no post is found', async () => {
+    postRepository.findOne.mockResolvedValue(null);
+
+    const result = await service.findOne(findOneArgs.id);
+
+    expect(postRepository.findOne).toHaveBeenCalledTimes(1);
+    expect(postRepository.findOne).toHaveBeenCalledWith(findOneArgs);
+
+    expect(result).toEqual(new EntityNotFoundError(Posts, findOneArgs.id));
+  });
+  it('should fail on findOne exception', async () => {
+    postRepository.findOne.mockRejectedValue('find error');
+    const result = await service.findOne(findOneArgs.id);
+    expect(result).toEqual('find error');
+  });
+  it('should fail on save exception', async () => {
+    postRepository.save.mockResolvedValue('find error');
+    const result = await service.update(findOneArgs.id, updateArgs);
+    expect(result).toEqual('find error');
+  });
+});
+```
 
 #### Test `remove()` method
+```ts
+describe('remove()', () => {
+  const removeArgs = '1';
+  const findOneArgs = { id: '1' };
+  const softDeleteArgs = { id: '1' };
+
+  it('should be remove post', async () => {
+    postRepository.findOne.mockResolvedValue(findOneArgs);
+    postRepository.softDelete.mockResolvedValue(softDeleteArgs);
+
+    await service.remove(removeArgs);
+
+    expect(postRepository.findOne).toHaveBeenCalledTimes(1);
+    expect(postRepository.findOne).toHaveBeenCalledWith(findOneArgs);
+
+    expect(postRepository.softDelete).toHaveBeenCalledTimes(1);
+    expect(postRepository.softDelete).toHaveBeenCalledWith(softDeleteArgs);
+  });
+
+  it('should fail if no post is found', async () => {
+    postRepository.findOne.mockResolvedValue(null);
+
+    const result = await service.remove(findOneArgs.id);
+
+    expect(postRepository.findOne).toHaveBeenCalledTimes(1);
+    expect(postRepository.findOne).toHaveBeenCalledWith(findOneArgs);
+
+    expect(result).toEqual(new EntityNotFoundError(Posts, findOneArgs.id));
+  });
+  it('should fail on findOne exception', async () => {
+    postRepository.findOne.mockRejectedValue('find error');
+    const result = await service.findOne(findOneArgs.id);
+    expect(result).toEqual('find error');
+  });
+  it('should fail on remove exception', async () => {
+    postRepository.findOne.mockRejectedValue('remove error');
+    const result = await service.findOne(findOneArgs.id);
+    expect(result).toEqual('remove error');
+  });
+});
+```
+
+## 
