@@ -12,9 +12,18 @@
   - Unit Test
 - Result
   - Test Coverage
-  - 느낀점
+- End-to-End(e2e) Testing
 
-## Testing
+## Test Code?
+최근 급하게 만들어야할 프로젝트가 생기면서 테스트 코드를 만들지 않고 진행하였습니다. 급하게 마무리가 되고 여러 이슈들이 발생하여 코드를 고치는 순간 다른부분에서 에러가 발생합니다. 이럴 때 정말 난처합니다. 😭
+
+Application이 점점 커져갈수록, 수정사항도 많아집니다. 하지만 수정으로이한 부작용(Side-effect)가 발생하죠. **만약** 귀찮더라도 Test Code를 작성했더라면..? 에러가 어디에서 발생하는지 쉽게 Catch할 수 있을 것 이고, 디버깅 편리 및 유지보수가 편리해질 것 입니다.
+
+**Test Code**에 대한 자세한 내용은 [설마 아직도 테스트 코드를 작성 안 하시나요?](https://ssowonny.medium.com/%EC%84%A4%EB%A7%88-%EC%95%84%EC%A7%81%EB%8F%84-%ED%85%8C%EC%8A%A4%ED%8A%B8-%EC%BD%94%EB%93%9C%EB%A5%BC-%EC%9E%91%EC%84%B1-%EC%95%88-%ED%95%98%EC%8B%9C%EB%82%98%EC%9A%94-b54ec61ef91a) 글에서 참고하시면 좋을 것 같습니다.
+
+이 프로젝트에서는 **실제 Database**와 연결하여 *게시글 CRUD* 작업을 해보는 `Unit Test`와 `End-to-end` Test를 진행해볼 예정입니다. 
+
+<hr>
 
 ## Set up
 
@@ -673,4 +682,91 @@ describe('remove()', () => {
 });
 ```
 
-## 
+<hr>
+
+## Result
+
+### Test Coverage
+```sh
+npm run test:cov
+
+---------------------|---------|----------|---------|---------|-------------------
+File                 | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+---------------------|---------|----------|---------|---------|-------------------
+All files            |   58.33 |      100 |   56.25 |   58.49 |                   
+ src                 |   41.94 |      100 |      75 |      36 |                   
+  app.controller.ts  |     100 |      100 |     100 |     100 |                   
+  app.module.ts      |       0 |      100 |     100 |       0 | 1-42              
+  app.service.ts     |     100 |      100 |     100 |     100 |                   
+  main.ts            |       0 |      100 |       0 |       0 | 1-18
+ src/post            |   63.89 |      100 |      50 |   66.67 | 
+  post.controller.ts |       0 |      100 |       0 |       0 | 1-40
+  post.module.ts     |       0 |      100 |     100 |       0 | 1-12
+  post.service.ts    |     100 |      100 |     100 |     100 | 
+  # post.service.ts 가 coverage 100% 를 달성했습니다! 👏👏👏
+ src/post/dto        |       0 |      100 |     100 |       0 | 
+  create-post.dto.ts |       0 |      100 |     100 |       0 | 1-4
+  update-post.dto.ts |       0 |      100 |     100 |       0 | 1-4
+ src/post/entities   |     100 |      100 |     100 |     100 |
+  post.entity.ts     |     100 |      100 |     100 |     100 |
+---------------------|---------|----------|---------|---------|-------------------
+Test Suites: 1 failed, 1 passed, 2 total
+Tests:       1 failed, 16 passed, 17 total
+Snapshots:   0 total
+Time:        8.027 s
+Ran all test suites.
+```
+
+coverage 로 부터 Unit Test의 어떤 부분이 Test가 빠졌는지 확인이 가능합니다. 
+
+100%를 다 채우면 **기분이 너무 좋습니다.** ~~(INTJ)~~
+
+<hr>
+
+## End-to-End(e2e) Testing
+(공사중 🛠)
+
+### Setting up
+- project RootDir의 `test/post.e2e-spec.ts` 를 만들어줍니다.
+```ts
+import { INestApplication } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { AppModule } from 'src/app.module';
+import { getConnection } from 'typeorm';
+
+describe('PostController (e2e)', () => {
+  let app: INestApplication;
+
+  // Test 전
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+  });
+
+  // Test 후
+  afterAll(async () => {
+    await getConnection().dropDatabase();
+    app.close();
+  });
+
+  describe('create', () => {
+    it.todo('should create Post');
+  });
+  describe('findAll', () => {
+    it.todo('should findAll Posts');
+  });
+  describe('findOne', () => {
+    it.todo('should findOne Post.');
+  });
+  describe('update', () => {
+    it.todo('should update Post.');
+  });
+  describe('remove', () => {
+    it.todo('should remove Post.');
+  });
+});
+
+```
